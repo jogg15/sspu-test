@@ -4,85 +4,80 @@
 
 #define INPUT_FILE  "cisla.txt"
 #define OUTPUT_FILE "hladiny.txt"
-#define PI 3.14159265358979323846
+#define PI 3.141592653589793
 
-FILE *openFile(const char *filename, const char *mode) {
-    FILE *file = fopen(filename, mode);
-    if (file == NULL) {
-        printf("Nelze otevrit '%s'\n", filename);
-        exit(EXIT_FAILURE);
+double cylinderVolume(int radius, int height)
+{
+    return (PI * radius * radius * height) / 1000.0;
+}
+
+double waterLevel(int radius, int water)
+{
+    return (water * 1000.0) / (PI * radius * radius);
+}
+
+int main()
+{
+    FILE *input;
+    FILE *output;
+
+    int radius, height, water;
+    int countScreen = 0;
+    int countFile = 0;
+
+    input = fopen(INPUT_FILE, "r");
+    if (input == NULL)
+    {
+        printf("Cannot open file %s\n", INPUT_FILE);
+        return 1;
     }
-    return file;
-}
 
-void closeFile(FILE *file) {
-    if (fclose(file) != 0) {
-        printf("Nelze zavrit soubor\n");
-        exit(EXIT_FAILURE);
+    output = fopen(OUTPUT_FILE, "w");
+    if (output == NULL)
+    {
+        printf("Cannot open file %s\n", OUTPUT_FILE);
+        fclose(input);
+        return 1;
     }
-}
 
-double cylinderVolume(int r, int h) {
-    return (PI * r * r * h) / 1000.0;
-}
+    printf("CYLINDERS\n\n");
+    printf("No. Radius Height Volume Water\n");
+    printf("----------------------------------\n");
 
-double waterLevel(int r, int water) {
-    return (water * 1000.0) / (PI * r * r);
-}
+    fprintf(output, "VALID CYLINDERS\n\n");
+    fprintf(output, "No. Radius Height Volume Water Level\n");
+    fprintf(output, "------------------------------------------\n");
 
-void printScreenHeader(void) {
-    printf("V A L C E\n\n");
-    printf("  %-10s %-10s %-20s %-15s\n", "polomer", "vyska", "objem valce", "mnozstvi vody");
-    printf("  %-10s %-10s %-20s %-15s\n", "(cm)", "(cm)", "(dm krychlove)", "(litry)");
-    printf("  ------------------------------------------------------------\n");
-}
-
-void printFileHeader(FILE *f) {
-    fprintf(f, "V A L C E   S   V Y H O V U J I C I M   O B J E M E M\n\n");
-    fprintf(f, "  %-10s %-10s %-20s %-15s %-15s\n",
-            "polomer", "vyska", "objem valce", "mnozstvi vody", "vyska hladiny");
-    fprintf(f, "  %-10s %-10s %-20s %-15s %-15s\n",
-            "(cm)", "(cm)", "(dm krychlove)", "(litry)", "(cm)");
-    fprintf(f, "  ------------------------------------------------------------------------\n");
-}
-
-int main(void) {
-    FILE *input  = openFile(INPUT_FILE,  "r");
-    FILE *output = openFile(OUTPUT_FILE, "w");
-
-    int r, h, water;
-    int order     = 0;
-    int orderFile = 0;
-
-    printScreenHeader();
-    printFileHeader(output);
-
-    while (fscanf(input, "%d %d %d", &r, &h, &water) == 3) {
-        if (r <= 0 || h <= 0 || water < 0) {
-            printf("Neplatne hodnoty: %d %d %d\n", r, h, water);
+    while (fscanf(input, "%d %d %d", &radius, &height, &water) == 3)
+    {
+        if (radius <= 0 || height <= 0 || water < 0)
+        {
+            printf("Invalid values: %d %d %d\n", radius, height, water);
             continue;
         }
 
-        order++;
-        double vol = cylinderVolume(r, h);
+        countScreen++;
 
-        printf("%3d. %4d cm   %4d cm   %8.2f dm   %6d l\n", order, r, h, vol, water);
+        double volume = cylinderVolume(radius, height);
 
-        if (vol >= water) {
-            orderFile++;
-            double level = waterLevel(r, water);
-            fprintf(output, "%3d. %4d cm   %4d cm   %8.2f dm   %6d l   %8.2f cm\n",
-                    orderFile, r, h, vol, water, level);
+        printf("%2d. %5d %6d %7.2f %5d\n",
+               countScreen, radius, height, volume, water);
+
+        if (volume >= water)
+        {
+            countFile++;
+
+            double level = waterLevel(radius, water);
+
+            fprintf(output, "%2d. %5d %6d %7.2f %5d %7.2f\n",
+                    countFile, radius, height, volume, water, level);
         }
     }
 
-    printf("  ------------------------------------------------------------\n");
-    fprintf(output, "  ------------------------------------------------------------------------\n");
+    fclose(input);
+    fclose(output);
 
-    printf("\nSoubor %s byl vytvoren.\n", OUTPUT_FILE);
-
-    closeFile(input);
-    closeFile(output);
+    printf("\nFile %s was created.\n", OUTPUT_FILE);
 
     return 0;
 }
