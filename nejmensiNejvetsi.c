@@ -1,95 +1,96 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define INPUT_FILE  "cisla.txt"
+#define INPUT_FILE "cisla.txt"
 #define OUTPUT_FILE "vystup.txt"
 
-FILE *openFile(const char *filename, const char *mode) {
-    FILE *file = fopen(filename, mode);
-    if (file == NULL) {
-        printf("Nelze otevrit '%s'\n", filename);
-        exit(EXIT_FAILURE);
-    }
-    return file;
-}
-
-void closeFile(FILE *file) {
-    if (fclose(file) != 0) {
-        printf("Nelze zavrit soubor\n");
-        exit(EXIT_FAILURE);
-    }
-}
-
-int gcd(int a, int b) {
+int gcd(int a, int b)
+{
     a = abs(a);
     b = abs(b);
-    while (b != 0) {
+
+    while (b != 0)
+    {
         int temp = b;
         b = a % b;
         a = temp;
     }
+
     return a;
 }
 
-int lcm(int a, int b) {
-    int d = gcd(a, b);
-    return (d == 0) ? 0 : abs(a) / d * abs(b);
+int lcm(int a, int b)
+{
+    if (a == 0 || b == 0)
+        return 0;
+
+    return abs(a * b) / gcd(a, b);
 }
 
-void printScreenHeader(void) {
-    printf("Vypis cisel ze souboru %s\n", INPUT_FILE);
-    printf("%-8s %-8s %-8s %-8s %-8s\n", "poradi", "cislo1", "cislo2", "nsn", "nsd");
-    printf("----------------------------------------\n");
+void printHeader()
+{
+    printf("No.   A     B    LCM   GCD\n");
+    printf("---------------------------\n");
 }
 
-void printFileHeader(FILE *f) {
-    fprintf(f, "Vypis delitelnych cisel ze souboru %s\n", INPUT_FILE);
-    fprintf(f, "----------------------------------------\n");
-    fprintf(f, "%-8s %-8s %-8s %-8s %-8s\n", "poradi", "cislo1", "cislo2", "nsn", "nsd");
-    fprintf(f, "----------------------------------------\n");
+void printFileHeader(FILE *file)
+{
+    fprintf(file, "No.   A     B    LCM   GCD\n");
+    fprintf(file, "---------------------------\n");
 }
 
-int main(void) {
-    FILE *input  = openFile(INPUT_FILE,  "r");
-    FILE *output = openFile(OUTPUT_FILE, "w");
+int main()
+{
+    FILE *input, *output;
 
     int a, b;
-    int order       = 0;
-    int orderFile   = 0;
-    long sumAll     = 0;
-    long sumFile    = 0;
+    int count = 0, saved = 0;
+    long sum = 0, sumSaved = 0;
 
-    printScreenHeader();
+    input = fopen(INPUT_FILE, "r");
+    output = fopen(OUTPUT_FILE, "w");
+
+    if (input == NULL || output == NULL)
+    {
+        printf("File error\n");
+        return 1;
+    }
+
+    printHeader();
     printFileHeader(output);
 
-    while (fscanf(input, "%d %d", &a, &b) == 2) {
-        order++;
-        int n = lcm(a, b);
+    while (fscanf(input, "%d %d", &a, &b) == 2)
+    {
+        count++;
+
         int d = gcd(a, b);
+        int n = lcm(a, b);
 
-        printf("%5d. %6d %6d %8d %5d\n", order, a, b, n, d);
-        sumAll += a;
+        printf("%2d. %4d %4d %5d %5d\n", count, a, b, n, d);
 
-        if (d > 1) {
-            orderFile++;
-            fprintf(output, "%5d. %6d %6d %8d %5d\n", orderFile, a, b, n, d);
-            sumFile += a;
+        sum += a;
+
+        if (d > 1)
+        {
+            saved++;
+
+            fprintf(output, "%2d. %4d %4d %5d %5d\n",
+                    saved, a, b, n, d);
+
+            sumSaved += a;
         }
     }
 
-    printf("----------------------------------------\n");
-    printf("Prumer cisel v prvnim sloupci je %.2f.\n",
-           order > 0 ? (double)sumAll / order : 0.0);
-    printf("Soubor %s obsahuje %d dvojic cisel.\n", INPUT_FILE, order);
-    printf("Byl vytvoren soubor %s.\n", OUTPUT_FILE);
+    printf("---------------------------\n");
+    printf("Average: %.2f\n", (count > 0) ? (double)sum / count : 0);
+    printf("Output file created: %s\n", OUTPUT_FILE);
 
-    fprintf(output, "----------------------------------------\n");
-    fprintf(output, "Prumer cisel v prvnim sloupci je %.2f.\n",
-            orderFile > 0 ? (double)sumFile / orderFile : 0.0);
-    fprintf(output, "Soubor %s obsahuje %d dvojic cisel.\n", OUTPUT_FILE, orderFile);
+    fprintf(output, "---------------------------\n");
+    fprintf(output, "Average: %.2f\n",
+            (saved > 0) ? (double)sumSaved / saved : 0);
 
-    closeFile(input);
-    closeFile(output);
+    fclose(input);
+    fclose(output);
 
     return 0;
 }
